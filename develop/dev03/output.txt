@@ -1,0 +1,5 @@
+banana 4
+pineapple 12
+melon 32
+apple 34
+strawberry 312

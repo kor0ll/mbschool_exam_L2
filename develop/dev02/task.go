@@ -29,7 +29,7 @@ import (
 func Unpack(s string) (string, error) {
 
 	if _, err := strconv.Atoi(s); err == nil {
-		return s, errors.New("некорректная строка")
+		return "", errors.New("некорректная строка")
 	}
 	var prev rune
 	var result strings.Builder

@@ -1,5 +1,13 @@
 package main
 
+import (
+	"dev11/internal/data"
+	"dev11/internal/handler"
+	"log"
+	"net/http"
+	"time"
+)
+
 /*
 === HTTP server ===
 
@@ -22,6 +30,47 @@ package main
 	4. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+// Функция для установки middleware для логов
+func middleWareForLogs(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Printf("%s %s %s", r.Method, r.RequestURI, time.Since(start))
+	})
+}
 
+func main() {
+	// создаем экземпляр LocalDB
+	db := data.CreateLocalDB()
+
+	// создаем и настраиваем маршрутизатор
+	mux := http.NewServeMux()
+	middleware := middleWareForLogs(mux)
+
+	// регистрируем handler'ы на каждый запрос
+	mux.HandleFunc("/create_event", func(w http.ResponseWriter, r *http.Request) {
+		handler.CreateEventHandler(w, r, db)
+	})
+	mux.HandleFunc("/update_event", func(w http.ResponseWriter, r *http.Request) {
+		handler.UpdateEventHandler(w, r, db)
+	})
+	mux.HandleFunc("/delete_event", func(w http.ResponseWriter, r *http.Request) {
+		handler.DeleteEventHandler(w, r, db)
+	})
+	mux.HandleFunc("/events_for_day", func(w http.ResponseWriter, r *http.Request) {
+		handler.GetEventsForDayHandler(w, r, db)
+	})
+	mux.HandleFunc("/events_for_week", func(w http.ResponseWriter, r *http.Request) {
+		handler.GetEventsInDateRangeHandler(w, r, db)
+	})
+	mux.HandleFunc("/events_for_month", func(w http.ResponseWriter, r *http.Request) {
+		handler.GetEventsInDateRangeHandler(w, r, db)
+	})
+
+	// указываем порт и запускаем сервер
+	port := ":8080"
+	log.Printf("Сервер запускается по порту %s\n", port)
+	if err := http.ListenAndServe(port, middleware); err != nil {
+		log.Fatal("Ошибка сервера:", err)
+	}
 }

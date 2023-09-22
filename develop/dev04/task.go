@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -24,45 +25,55 @@ import (
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-func getHash(s string) int {
-	sum := 0
-	for _, v := range s {
-		sum += int(v)
-	}
-	return sum
+// функция возвращающая отсортированную по буквам строку
+func GetSortString(s string) string {
+	sl := strings.Split(s, "")
+	sort.Strings(sl)
+	result := strings.Join(sl, "")
+
+	return result
 }
 
-func FindAnogram(sl []string) *map[string][]string {
+// функция для нахождения анаграмм в массиве
+func FindAnagramm(sl []string) *map[string][]string {
 	m := make(map[string][]string)
+	for _, word := range sl {
+		//сортируем строку по буквам и распределяем по множествам
+		word = strings.ToLower(word)
+		sortedWord := GetSortString(word)
 
-	for _, val := range sl {
-		val = strings.ToLower(val)
-		sum := 0
-		currentWord := ""
-		sum = getHash(val)
-
-		for i := range m {
-			if getHash(i) == sum {
-				currentWord = i
-			}
-		}
-		if currentWord != "" {
-			m[currentWord] = append(m[currentWord], val)
+		if _, ok := m[sortedWord]; !ok {
+			m[sortedWord] = []string{word}
 		} else {
-			m[val] = []string{val}
+			m[sortedWord] = append(m[sortedWord], word)
 		}
 	}
+	//удаляем из мапы множества из одного элемента
 	for i := range m {
 		if len(m[i]) == 1 {
 			delete(m, i)
 		}
 	}
-
-	return &m
+	//преобразуем ключи в нормальный вид (первое встретившееся слово) и сортируем множества по возрастанию
+	resultMap := make(map[string][]string, len(m))
+	for _, arr := range m {
+		sortedValue := make([]string, len(arr))
+		copy(sortedValue, arr)
+		sort.Slice(sortedValue, func(i, j int) bool {
+			return arr[i] < arr[j]
+		})
+		resultMap[arr[0]] = sortedValue
+	}
+	return &resultMap
 }
 
 func main() {
 	ar := []string{"пятка", "тяпка", "лимон", "милон", "пятак", "листок", "Слиток", "слизень"}
 
-	fmt.Println(FindAnogram(ar))
+	result := FindAnagramm(ar)
+
+	for index, value := range *result {
+		fmt.Println("Index ", index, ": ", value)
+	}
+
 }
